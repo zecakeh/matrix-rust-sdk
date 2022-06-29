@@ -13,4 +13,4 @@ jobs:
   xtask:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Event Number: ${{ github.event.number }}"
+      - run: 'echo "Event Number: ${{ github.event.number }}"'
