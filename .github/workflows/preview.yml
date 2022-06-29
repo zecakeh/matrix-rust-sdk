@@ -17,4 +17,10 @@ jobs:
       - name: Log
         uses: actions/github-script@v6
         with:
-          script: console.log(context.workflow_run.pull_request[0])
+          script: |
+            console.log("Number of PRs: ", context.workflow_run.pull_requests.length);
+            console.log("PRs: ", context.workflow_run.pull_requests);
+            console.log("First PR: ", context.workflow_run.pull_requests[0]);
+            for (let i in context.workflow_run.pull_requests) {
+               console.log("PR: ", i);
+            }
