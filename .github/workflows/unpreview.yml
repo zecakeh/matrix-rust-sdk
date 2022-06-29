@@ -31,7 +31,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          pull-request-number: steps.log.outputs.prnumber
+          pull-request-number: ${{ steps.log.outputs.prnumber }}
           description-message: |
             ----
             Closed Script PR Number: ${{ steps.log.outputs.prnumber }}
