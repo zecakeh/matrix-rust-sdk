@@ -1,0 +1,16 @@
+name: Trigger
+
+env:
+  CARGO_TERM_COLOR: always
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  xtask:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Event Number: ${{ github.event.number }}"
