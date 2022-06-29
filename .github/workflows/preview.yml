@@ -1,0 +1,20 @@
+name: Preview
+
+env:
+  CARGO_TERM_COLOR: always
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'  
+    steps:
+      - name: Log
+        uses: actions/github-script@v6
+        with:
+          script: console.log(context)
