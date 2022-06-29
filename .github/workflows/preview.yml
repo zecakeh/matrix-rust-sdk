@@ -21,11 +21,10 @@ jobs:
           script: |
             let prs = context.payload.workflow_run.pull_requests;
             console.log("Number of PRs: ", prs.length);
-            console.log("First PR: ", prs[0]);
             for (let i of prs) {
                console.log("PR: ", i);
             }
-            core.setOutput("prnumber", prs[O].number);
+            core.setOutput("prnumber", prs[0].number);
       
       - name: Comment PR Number
         uses: Beakyn/gha-comment-pull-request@v1.0.2
