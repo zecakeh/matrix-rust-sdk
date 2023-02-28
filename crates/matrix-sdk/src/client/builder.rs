@@ -418,7 +418,7 @@ impl ClientBuilder {
         };
 
         let homeserver = RwLock::new(Url::parse(&homeserver)?);
-        let authentication_issuer = authentication_issuer.map(RwLock::new);
+        let authentication_issuer = RwLock::new(authentication_issuer);
         #[cfg(feature = "experimental-sliding-sync")]
         let sliding_sync_proxy = sliding_sync_proxy.map(RwLock::new);
 
@@ -448,6 +448,8 @@ impl ClientBuilder {
             refresh_token_lock: Mutex::new(Ok(())),
             unknown_token_error_sender,
             root_span: self.root_span,
+            #[cfg(feature = "experimental-oidc")]
+            oidc_data: OnceCell::new(),
         });
 
         debug!("Done building the Client");
