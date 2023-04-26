@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(feature = "experimental-oidc")]
+use std::collections::HashMap;
 use std::{fmt, sync::Arc};
 
 #[cfg(target_arch = "wasm32")]
@@ -450,6 +452,8 @@ impl ClientBuilder {
             root_span: self.root_span,
             #[cfg(feature = "experimental-oidc")]
             oidc_data: OnceCell::new(),
+            #[cfg(feature = "experimental-oidc")]
+            oidc_validation_data: RwLock::new(HashMap::new()),
         });
 
         debug!("Done building the Client");
