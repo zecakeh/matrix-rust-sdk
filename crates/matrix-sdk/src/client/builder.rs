@@ -453,7 +453,7 @@ impl ClientBuilder {
             #[cfg(feature = "experimental-oidc")]
             oidc_data: OnceCell::new(),
             #[cfg(feature = "experimental-oidc")]
-            oidc_validation_data: RwLock::new(HashMap::new()),
+            oidc_validation_data: Mutex::new(HashMap::new()),
         });
 
         debug!("Done building the Client");

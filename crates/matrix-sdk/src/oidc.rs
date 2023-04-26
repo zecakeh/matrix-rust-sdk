@@ -376,21 +376,19 @@ impl Oidc {
     /// # let client = Client::new(homeserver).await?;
     /// let oidc = client.oidc();
     ///
-    /// let auth_url = oidc
-    ///     .url_for_authorize_scope_with_authorization_code(scope, redirect_uri)
-    ///     .await?;
-    /// // Open auth_url.url and wait for response at the redirect URI.
+    /// let auth_data =
+    ///     oidc.url_for_scope_with_authorization_code(scope, redirect_uri).await?;
+    /// // Open auth_data.url and wait for response at the redirect URI.
     ///
     /// # let (code, redirect_state) = (String::new(), String::new());
-    /// if redirect_state != auth_url.state {
-    ///     return Err(Error::UnknownError("wrong state".into()));
-    /// }
     ///
-    /// // Alternatively, the state can be used as an identifier to handle
-    /// // several authorization requests with a single redirect URI.
+    /// // Alternatively, the state can be used as an identifier to handle several
+    /// // authorization requests with a single redirect URI. In this instance the
+    /// // redirect_state should be compared to auth_data.state before proceeding.
     ///
-    /// let _response =
-    ///     oidc.authorize_scope_with_authorization_code(&auth_url, code).await?;
+    /// let _response = oidc
+    ///     .finish_authorization_with_authorization_code(code, redirect_state)
+    ///     .await?;
     ///
     /// // The access and refresh tokens can be persisted either from the response,
     /// // or from one of the `Client::session_tokens*` methods.
@@ -401,11 +399,11 @@ impl Oidc {
     /// ```
     ///
     /// [`ClientErrorCode`]: matrix_sdk::oidc::types::errors::ClientErrorCode
-    pub async fn url_for_authorize_scope_with_authorization_code(
+    pub async fn url_for_scope_with_authorization_code(
         &self,
         scope: &Scope,
         redirect_uri: &Url,
-    ) -> Result<OidcAuthenticationUrl, OidcError> {
+    ) -> Result<OidcAuthorizationData, OidcError> {
         let provider_metadata = self.provider_metadata().await?;
         let client_credentials = self.client_credentials().ok_or(OidcError::NotAuthenticated)?;
 
@@ -431,61 +429,25 @@ impl Oidc {
 
         self.client.inner.oidc_validation_data.write().await.insert(state.clone(), validation_data);
 
-        Ok(OidcAuthenticationUrl { url, state })
+        Ok(OidcAuthorizationData { url, state })
     }
 
-    /// Authorize the given scope by using the Authorization Code flow.
+    /// Finish authorizing a given scope by using the Authorization Code flow.
     ///
-    /// This should be called after the registered client has been restored with
-    /// [`Oidc::restore_registered_client()`] and the URL returned by
-    /// `url_for_authorize_scope_with_authorization_code` has been presented.
+    /// This should be called after the URL returned by
+    /// [`url_for_scope_with_authorization_code`] has been presented and
+    /// has redirected the user to to the redirect URI.
     ///
     /// # Arguments
     ///
-    /// * `code` - The code received as part of the redirect URI when login was
-    ///   successful.
+    /// * `code` - The code received as part of the redirect URI when the
+    ///   authorization was successful.
     ///
-    /// * `state` - The unique string that was included in the
-    ///   `OidcAuthenicationUrl` used for authorization.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use matrix_sdk::{Client, Error};
-    /// # use url::Url;
-    /// # let homeserver = Url::parse("https://example.com").unwrap();
-    /// # let redirect_uri = Url::parse("http://127.0.0.1/oidc").unwrap();
-    /// # let scope = "scope".parse().unwrap();
-    /// # block_on(async {
-    /// # let client = Client::new(homeserver).await?;
-    /// let oidc = client.oidc();
-    ///
-    /// let auth_url = oidc
-    ///     .url_for_authorize_scope_with_authorization_code(scope, redirect_uri)
-    ///     .await?;
-    /// // Open auth_url.url and wait for response at the redirect URI.
-    ///
-    /// # let (code, redirect_state) = (String::new(), String::new());
-    /// if redirect_state != auth_url.state {
-    ///     return Err(Error::UnknownError("wrong state".into()));
-    /// }
-    ///
-    /// // Alternatively, the state can be used as an identifier to handle
-    /// // several authorization requests with a single redirect URI.
-    ///
-    /// let _response =
-    ///     oidc.authorize_scope_with_authorization_code(&auth_url, code).await?;
-    ///
-    /// // The access and refresh tokens can be persisted either from the response,
-    /// // or from one of the `Client::session_tokens*` methods.
-    ///
-    /// // You can now make any request compatible with the requested scope.
-    /// let _me = client.whoami().await?;
-    /// # anyhow::Ok(()) })
-    /// ```
+    /// * `state` - The unique string received as part of the redirect URI when
+    ///   the authorization was successful
     ///
     /// [`ClientErrorCode`]: matrix_sdk::oidc::types::errors::ClientErrorCode
-    pub async fn authorize_scope_with_authorization_code(
+    pub async fn finish_authorization_with_authorization_code(
         &self,
         code: String,
         state: String,
@@ -556,7 +518,7 @@ impl Oidc {
     /// # let client = Client::new(homeserver).await?;
     /// let oidc = client.oidc();
     ///
-    /// let _response = oidc.authorize_scope_with_authorization_code(scope).await?;
+    /// let _response = oidc.authorize_scope_with_client_credentials(scope).await?;
     ///
     /// // The access and refresh tokens can be persisted either from the response,
     /// // or from one of the `Client::session_tokens*` methods.
@@ -714,22 +676,22 @@ impl OidcLoginBuilder {
     /// # let client = Client::new(homeserver).await?;
     /// let oidc = client.oidc();
     ///
-    /// let auth_url = oidc
+    /// let auth_data = oidc
     ///     .login()
     ///     .url_for_login_with_authorization_code(&redirect_uri)
     ///     .await?;
-    /// // Open auth_url.url and wait for response at the redirect URI.
+    /// // Open auth_data.url and wait for response at the redirect URI.
     ///
     /// # let (code, redirect_state) = (String::new(), String::new());
-    /// if redirect_state != auth_url.state {
-    ///     return Err(Error::UnknownError("wrong state".into()));
-    /// }
     ///
-    /// // Alternatively, the state can be used as an identifier to handle
-    /// // several authorization requests with a single redirect URI.
+    /// // Alternatively, the state can be used as an identifier to handle several
+    /// // authorization requests with a single redirect URI. In this instance the
+    /// // redirect_state should be compared to auth_data.state before proceeding.
     ///
-    /// let _response =
-    ///     oidc.login().login_with_authorization_code(&auth_url, code).await?;
+    /// let _response = oidc
+    ///     .login()
+    ///     .login_with_authorization_code(code, redirect_state)
+    ///     .await?;
     ///
     /// // The access and refresh tokens can be persisted either from the response,
     /// // or from one of the `Client::session_tokens*` methods.
@@ -744,63 +706,28 @@ impl OidcLoginBuilder {
     pub async fn url_for_login_with_authorization_code(
         self,
         redirect_uri: &Url,
-    ) -> Result<OidcAuthenticationUrl, OidcError> {
+    ) -> Result<OidcAuthorizationData, OidcError> {
         let issuer = self.oidc.issuer().await.ok_or(OidcError::MissingAuthenticationIssuer)?;
         info!(issuer, "Logging in via OpenID Connect with the Authorization Code flow");
 
         let scope = generate_scope(self.device_id)?;
 
-        self.oidc.url_for_authorize_scope_with_authorization_code(&scope, redirect_uri).await
+        self.oidc.url_for_scope_with_authorization_code(&scope, redirect_uri).await
     }
 
-    /// Login via the Authorization Code flow.
+    /// Finish logging in via the Authorization Code flow.
+    ///
+    /// This method should be called after the URL returned by
+    /// [`url_for_login_with_authorization_code`] has been presented and
+    /// has redirected the user to to the redirect URI.
     ///
     /// # Arguments
     ///
     /// * `code` - The code received as part of the redirect URI when login was
     ///   successful.
     ///
-    /// * `state` - The unique string that was included in the
-    ///   `OidcAuthenicationUrl` used for login.
-    ///
-    /// This method should be called after presenting the URL returned by
-    /// `url_for_login_with_authorization_code`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use matrix_sdk::{Client, Error};
-    /// # use url::Url;
-    /// # let homeserver = Url::parse("https://example.com").unwrap();
-    /// # let redirect_uri = Url::parse("http://127.0.0.1/oidc").unwrap();
-    /// # block_on(async {
-    /// # let client = Client::new(homeserver).await?;
-    /// let oidc = client.oidc();
-    ///
-    /// let auth_url = oidc
-    ///     .login()
-    ///     .url_for_login_with_authorization_code(&redirect_uri)
-    ///     .await?;
-    /// // Open auth_url.url and wait for response at the redirect URI.
-    ///
-    /// # let (code, redirect_state) = (String::new(), String::new());
-    /// if redirect_state != auth_url.state {
-    ///     return Err(Error::UnknownError("wrong state".into()));
-    /// }
-    ///
-    /// // Alternatively, the state can be used as an identifier to handle
-    /// // several authorization requests with a single redirect URI.
-    ///
-    /// let _response =
-    ///     oidc.login().login_with_authorization_code(&auth_url, code).await?;
-    ///
-    /// // The access and refresh tokens can be persisted either from the response,
-    /// // or from one of the `Client::session_tokens*` methods.
-    ///
-    /// // You can now make any request compatible with the requested scope.
-    /// let _me = client.whoami().await?;
-    /// # anyhow::Ok(()) })
-    /// ```
+    /// * `state` - The unique string received as part of the redirect URI when
+    ///   login was successful
     ///
     /// [`ClientErrorCode`]: matrix_sdk::oidc::types::errors::ClientErrorCode
     #[instrument(target = "matrix_sdk::client", skip_all)]
@@ -809,7 +736,7 @@ impl OidcLoginBuilder {
         code: String,
         state: String,
     ) -> Result<AccessTokenResponse, OidcError> {
-        let response = self.oidc.authorize_scope_with_authorization_code(code, state).await?;
+        let response = self.oidc.finish_authorization_with_authorization_code(code, state).await?;
         self.oidc.load_session_meta().await?;
 
         Ok(response)
@@ -863,10 +790,9 @@ pub(crate) struct OidcData {
     pub(crate) latest_id_token: RwLock<Option<IdToken<'static>>>,
 }
 
-/// Information about the URL that should be presented to authenticate with the
-/// server.
+/// The data needed to perform authorization using OpenID Connect.
 #[derive(Debug)]
-pub struct OidcAuthenticationUrl {
+pub struct OidcAuthorizationData {
     /// The URL that should be presented.
     pub url: Url,
     /// A unique identifier for the request.

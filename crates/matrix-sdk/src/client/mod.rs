@@ -202,7 +202,7 @@ pub(crate) struct ClientInner {
     pub(crate) oidc_data: OnceCell<OidcData>,
     /// The data needed to validate an OpenID Connect authorization request.
     #[cfg(feature = "experimental-oidc")]
-    pub(crate) oidc_validation_data: RwLock<HashMap<String, AuthorizationValidationData>>,
+    pub(crate) oidc_validation_data: Mutex<HashMap<String, AuthorizationValidationData>>,
 }
 
 #[cfg(not(tarpaulin_include))]
