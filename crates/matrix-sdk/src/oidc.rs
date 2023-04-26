@@ -629,7 +629,7 @@ impl Oidc {
 /// OpenID Connect Provider via the Authorization Code flow.
 ///
 /// Created with [`Oidc::login`]. Finalized with
-/// [`.login_with_authorization_code()`](Self::login_with_authorization_code) or
+/// [`.finish_login_with_authorization_code()`](Self::finish_login_with_authorization_code) or
 /// [`.login_with_client_credentials()`](Self::login_with_client_credentials).
 #[allow(missing_debug_implementations)]
 pub struct OidcLoginBuilder {
@@ -690,7 +690,7 @@ impl OidcLoginBuilder {
     ///
     /// let _response = oidc
     ///     .login()
-    ///     .login_with_authorization_code(code, redirect_state)
+    ///     .finish_login_with_authorization_code(code, redirect_state)
     ///     .await?;
     ///
     /// // The access and refresh tokens can be persisted either from the response,
@@ -731,7 +731,7 @@ impl OidcLoginBuilder {
     ///
     /// [`ClientErrorCode`]: matrix_sdk::oidc::types::errors::ClientErrorCode
     #[instrument(target = "matrix_sdk::client", skip_all)]
-    pub async fn login_with_authorization_code(
+    pub async fn finish_login_with_authorization_code(
         &self,
         code: String,
         state: String,
@@ -759,7 +759,7 @@ impl OidcLoginBuilder {
     /// # let client = Client::new(homeserver).await?;
     /// let oidc = client.oidc();
     ///
-    /// let _response = oidc.login_with_authorization_code().await?;
+    /// let _response = oidc.login_with_client_credentials().await?;
     ///
     /// // The access and refresh tokens can be persisted either from the response,
     /// // or from one of the `Client::session_tokens*` methods.
@@ -791,7 +791,7 @@ pub(crate) struct OidcData {
 }
 
 /// The data needed to perform authorization using OpenID Connect.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OidcAuthorizationData {
     /// The URL that should be presented.
     pub url: Url,

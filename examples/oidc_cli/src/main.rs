@@ -224,7 +224,7 @@ impl OidcCli {
                 .client
                 .oidc()
                 .login()
-                .login_with_authorization_code(
+                .finish_login_with_authorization_code(
                     authorization_response.code,
                     authorization_response.state,
                 )
