@@ -427,7 +427,7 @@ impl Oidc {
 
         let state = validation_data.state.clone();
 
-        self.client.inner.oidc_validation_data.write().await.insert(state.clone(), validation_data);
+        self.client.inner.oidc_validation_data.lock().await.insert(state.clone(), validation_data);
 
         Ok(OidcAuthorizationData { url, state })
     }
@@ -459,7 +459,7 @@ impl Oidc {
             .client
             .inner
             .oidc_validation_data
-            .write()
+            .lock()
             .await
             .remove(&state)
             .ok_or(OidcError::InvalidState)?;
