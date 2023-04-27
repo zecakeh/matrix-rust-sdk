@@ -349,7 +349,9 @@ impl Oidc {
     }
 
     /// Get the URL that should be presented to authorize a given scope with the
-    /// Authorization Code flow.
+    /// Authorization Code flow. This URL should be presented to the user and
+    /// once a redirect is made to the redirect_uri, the authorization can be
+    /// finished by calling [`finish_authorization_with_authorization_code`].
     ///
     /// This should be used if a new scope is necessary to make a request.
     ///
@@ -368,6 +370,7 @@ impl Oidc {
     ///
     /// ```no_run
     /// use matrix_sdk::{Client, Error};
+    /// # use futures::executor::block_on;
     /// # use url::Url;
     /// # let homeserver = Url::parse("https://example.com").unwrap();
     /// # let redirect_uri = Url::parse("http://127.0.0.1/oidc").unwrap();
@@ -657,7 +660,9 @@ impl OidcLoginBuilder {
     }
 
     /// Get the URL that should be presented to login via the Authorization Code
-    /// flow.
+    /// flow. This URL should be presented to the user and once a redirect is
+    /// made to the redirect_uri, the login can be finished by calling
+    /// [`finish_login_with_authorization_code`].
     ///
     /// # Arguments
     ///
@@ -669,6 +674,7 @@ impl OidcLoginBuilder {
     ///
     /// ```no_run
     /// use matrix_sdk::{Client, Error};
+    /// # use futures::executor::block_on;
     /// # use url::Url;
     /// # let homeserver = Url::parse("https://example.com").unwrap();
     /// # let redirect_uri = Url::parse("http://127.0.0.1/oidc").unwrap();
