@@ -4369,7 +4369,7 @@ pub(crate) mod tests {
         ttl::TtlValue,
     };
     use matrix_sdk_test::{
-        DEFAULT_TEST_ROOM_ID, JoinedRoomBuilder, SyncResponseBuilder, async_test,
+        JoinedRoomBuilder, SyncResponseBuilder, TestRoom, User, async_test,
         event_factory::EventFactory,
     };
     use strass::assert_let;
@@ -4678,21 +4678,16 @@ pub(crate) mod tests {
         let server = MatrixMockServer::new().await;
         let client = server.client_builder().build().await;
 
-        let f = EventFactory::new().sender(user_id!("@example:localhost"));
-        server
-            .mock_sync()
-            .ok_and_run(&client, |builder| {
-                builder.add_joined_room(
-                    JoinedRoomBuilder::default()
-                        .add_state_event(
-                            f.member(user_id!("@example:localhost")).display_name("example"),
-                        )
-                        .add_state_event(f.power_levels()),
-                );
-            })
+        let f = EventFactory::new().sender(User::Alice);
+        let room = server
+            .sync_room(
+                &client,
+                JoinedRoomBuilder::default()
+                    .add_state_event(f.member(User::Alice).display_name("example"))
+                    .add_state_event(f.power_levels()),
+            )
             .await;
 
-        let room = client.get_room(&DEFAULT_TEST_ROOM_ID).unwrap();
         assert_eq!(room.state(), RoomState::Joined);
     }
 
@@ -5956,7 +5951,7 @@ pub(crate) mod tests {
         let f = EventFactory::new().sender(user_id!("@example:localhost"));
         let response = SyncResponseBuilder::default()
             .add_joined_room(JoinedRoomBuilder::default().add_state_event(f.member(user_id)))
-            .add_global_account_data(f.direct().add_user(user_id, *DEFAULT_TEST_ROOM_ID))
+            .add_global_account_data(f.direct().add_user(user_id, TestRoom::Default))
             .build_sync_response();
         client.base_client().receive_sync_response(response).await.unwrap();
 
@@ -5979,7 +5974,7 @@ pub(crate) mod tests {
                 JoinedRoomBuilder::default()
                     .add_state_event(f.member(user_id).invited(user_id).display_name("example")),
             )
-            .add_global_account_data(f.direct().add_user(user_id, *DEFAULT_TEST_ROOM_ID))
+            .add_global_account_data(f.direct().add_user(user_id, TestRoom::Default))
             .build_sync_response();
         client.base_client().receive_sync_response(response).await.unwrap();
 
@@ -6008,7 +6003,7 @@ pub(crate) mod tests {
             .add_joined_room(
                 JoinedRoomBuilder::default().add_state_event(f.member(user_id).leave()),
             )
-            .add_global_account_data(f.direct().add_user(user_id, *DEFAULT_TEST_ROOM_ID))
+            .add_global_account_data(f.direct().add_user(user_id, TestRoom::Default))
             .build_sync_response();
         client.base_client().receive_sync_response(response).await.unwrap();
 
